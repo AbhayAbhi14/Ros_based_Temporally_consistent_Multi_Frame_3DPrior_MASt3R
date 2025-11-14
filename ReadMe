@@ -49,22 +49,23 @@ Chamfer/Overlap/ΔDepth metrics logging (CSV)
 This module ensures temporal stability, reduces flicker, avoids depth jumps, and maintains structural consistency.
 
 📦 Project Structure
-mast3r_ros/
+ros_ws/
 │
-├── mast3r_node/
-│   ├── mast3r_node.py          # MASt3R inference code
-│   ├── model/                  # (Optional) MASt3R ONNX weights
+├── fused_snapshots/
+│   ├── fixed/fused/global.ply        
+│   ├── plots
+|   |── analysis_results 
 │
-├── temporal_fusion/
-│   ├── temporal_fusion_node.py # Multi-frame 3D fusion algorithm
-│   ├── metrics/                # Logs (CSV)
-│   ├── snapshots/              # Fused pointclouds (.ply)
-│
-├── launch/
-│   ├── mast3r_fusion.launch.py # Runs both nodes
+├── src/mono_reconstruct
+│   ├── temporal_fusion_node.py/temporal_fusion_fixed.py
+│   ├── camera_node.py               
+│   ├── mast3r_node.py              
+│   ├── camera_tf_broadcaster.py        
+|   |── launch/
+│   ├── webcam_mono_recon.launch.py
 │
 ├── config/
-│   ├── camera.yaml             #camera intrinsics
+│   ├── camera_intrinsics.yaml             #camera intrinsics
 │
 └── README.md
 
@@ -174,7 +175,7 @@ If you use this work in research:
 @misc{yourthesis2025mast3rtemporal,
   title={ROS-Based Temporally Consistent Monocular 3D Reconstruction Using Multi-Frame 3D Priors with MASt3R Integration},
   author={Payadi, Abhay},
-  year={2025}
+  year={2026}
 }
 
 🤝 Contributing

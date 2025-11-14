@@ -77,7 +77,8 @@ cd Ros_based_Temporally_consistent_Multi_Frame_3DPrior_MASt3R
 mkdir -p ~/ros2_ws/src
 cp -r <repo-name> ~/ros2_ws/src/
 cd ~/ros2_ws
-colcon build
+conda activate mast3r_ros
+colcon build --packages-select mono_reconstruct
 source install/setup.bash
 
 3. Install Dependencies
@@ -86,7 +87,7 @@ sudo apt install ros-humble-cv-bridge ros-humble-image-transport
 
 ▶️ Running the System
 Launch MASt3R + Temporal Fusion
-ros2 launch mast3r_ros mast3r_fusion.launch.py
+ros2 launch mono_reconstruct webcam_mono_recon.launch.py
 
 Inputs Required:
 
@@ -143,7 +144,7 @@ Choose topics:
 
 Tested with:
 
-GoPro Hero 12 (2560×1440, 512×256 downsampled)
+Webcam (2560×1440, 512×256 downsampled)
 
 Oxford RobotCar (monocular sequences)
 

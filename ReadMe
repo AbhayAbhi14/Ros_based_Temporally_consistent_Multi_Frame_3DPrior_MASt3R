@@ -3,7 +3,7 @@
 
 This project implements a real-time, temporally consistent monocular 3D reconstruction pipeline using:
 
-GoPro Hero 12 wide-angle action camera
+Webcam
 
 MASt3R (Monocular 3D reconstruction model)
 
@@ -24,7 +24,7 @@ Outputs per-frame 3D point clouds
 
 Publishes sensor_msgs/PointCloud2
 
-Optimized for GoPro wide-FOV videos (512×256)
+Optimized for videos (512×256)
 
 🔁 Temporal Fusion Node (Core Contribution)
 
@@ -64,14 +64,14 @@ mast3r_ros/
 │   ├── mast3r_fusion.launch.py # Runs both nodes
 │
 ├── config/
-│   ├── camera.yaml             # GoPro camera intrinsics
+│   ├── camera.yaml             #camera intrinsics
 │
 └── README.md
 
 🛠️ Installation
 1. Clone the repo
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/AbhayAbhi14/Ros_based_Temporally_consistent_Multi_Frame_3DPrior_MASt3R
+cd Ros_based_Temporally_consistent_Multi_Frame_3DPrior_MASt3R
 
 2. Setup ROS2 Workspace
 mkdir -p ~/ros2_ws/src
@@ -90,7 +90,7 @@ ros2 launch mast3r_ros mast3r_fusion.launch.py
 
 Inputs Required:
 
-GoPro camera video stream (Live or ROS bag)
+camera video stream (Live or ROS bag)
 
 Camera intrinsics from camera.yaml
 

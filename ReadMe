@@ -80,6 +80,7 @@ cd ~/ros2_ws
 conda activate mast3r_ros
 colcon build --packages-select mono_reconstruct
 source install/setup.bash
+./fix_shebangs.sh
 
 3. Install Dependencies
 pip install open3d scipy numpy

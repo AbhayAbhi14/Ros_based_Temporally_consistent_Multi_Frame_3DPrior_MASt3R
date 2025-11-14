@@ -1,1 +1,181 @@
 
+🚗 ROS-Based Temporally Consistent Monocular 3D Reconstruction Using Multi-Frame 3D Priors with MASt3R Integration
+
+This project implements a real-time, temporally consistent monocular 3D reconstruction pipeline using:
+
+GoPro Hero 12 wide-angle action camera
+
+MASt3R (Monocular 3D reconstruction model)
+
+Temporal Fusion Node (custom ROS2 fusion algorithm)
+
+ICP-based multi-frame alignment
+
+Geometric multi-frame 3D priors
+
+The system reconstructs stable 3D scenes in urban driving environments using only a single monocular camera, achieving improved temporal consistency through multi-frame fusion.
+
+🔥 Key Features
+🧠 MASt3R Node (Inference Node)
+
+Runs MASt3R in ROS2 (ONNX/PyTorch)
+
+Outputs per-frame 3D point clouds
+
+Publishes sensor_msgs/PointCloud2
+
+Optimized for GoPro wide-FOV videos (512×256)
+
+🔁 Temporal Fusion Node (Core Contribution)
+
+Implements a novel multi-frame fusion strategy:
+
+Temporal Exponential Moving Average (EMA) fusion
+
+Adaptive α blending based on ICP fitness
+
+Temporal multi-frame buffer (5–10 frames)
+
+ICP-based frame alignment (Open3D)
+
+Outlier rejection (statistical + geometric filtering)
+
+Voxel downsampled global map publishing
+
+Chamfer/Overlap/ΔDepth metrics logging (CSV)
+
+.ply snapshot saving every N frames
+
+This module ensures temporal stability, reduces flicker, avoids depth jumps, and maintains structural consistency.
+
+📦 Project Structure
+mast3r_ros/
+│
+├── mast3r_node/
+│   ├── mast3r_node.py          # MASt3R inference code
+│   ├── model/                  # (Optional) MASt3R ONNX weights
+│
+├── temporal_fusion/
+│   ├── temporal_fusion_node.py # Multi-frame 3D fusion algorithm
+│   ├── metrics/                # Logs (CSV)
+│   ├── snapshots/              # Fused pointclouds (.ply)
+│
+├── launch/
+│   ├── mast3r_fusion.launch.py # Runs both nodes
+│
+├── config/
+│   ├── camera.yaml             # GoPro camera intrinsics
+│
+└── README.md
+
+🛠️ Installation
+1. Clone the repo
+git clone https://github.com/<your-username>/<repo-name>.git
+cd <repo-name>
+
+2. Setup ROS2 Workspace
+mkdir -p ~/ros2_ws/src
+cp -r <repo-name> ~/ros2_ws/src/
+cd ~/ros2_ws
+colcon build
+source install/setup.bash
+
+3. Install Dependencies
+pip install open3d scipy numpy
+sudo apt install ros-humble-cv-bridge ros-humble-image-transport
+
+▶️ Running the System
+Launch MASt3R + Temporal Fusion
+ros2 launch mast3r_ros mast3r_fusion.launch.py
+
+Inputs Required:
+
+GoPro camera video stream (Live or ROS bag)
+
+Camera intrinsics from camera.yaml
+
+Published Topics:
+Topic	Type	Description
+/mast3r/points	PointCloud2	Raw MASt3R reconstruction
+/fusion/fused_points	PointCloud2	EMA temporally fused cloud
+/fusion/global_map	PointCloud2	Accumulated map
+📊 Evaluation Metrics (Logged Automatically)
+
+Metrics are written to:
+
+temporal_fusion/metrics/metrics_log.csv
+
+
+Logged values include:
+
+✔ Chamfer Distance
+
+✔ Point Overlap Ratio
+
+✔ Depth Difference (Δdepth)
+
+✔ ICP Fitness Score
+
+✔ Fusion Stability Score
+
+These are used for validation, comparison, and thesis graphs.
+
+🎨 Visualizing Point Clouds
+
+Launch RViz2:
+
+rviz2
+
+
+Add displays:
+
+PointCloud2
+
+Choose topics:
+
+/mast3r/points
+
+/fusion/fused_points
+
+/fusion/global_map
+
+📷 Dataset Compatibility
+
+Tested with:
+
+GoPro Hero 12 (2560×1440, 512×256 downsampled)
+
+Oxford RobotCar (monocular sequences)
+
+YouTube driving datasets (webcam format)
+
+📝 Research Goal
+
+This project is developed as part of a thesis:
+
+“ROS-Based Temporally Consistent Monocular 3D Reconstruction Using Multi-Frame 3D Priors with MASt3R Integration.”
+
+The main contributions include:
+
+Temporal consistency using EMA + adaptive weighting
+
+ICP-driven multi-frame registration
+
+Multi-frame priors improving geometric stability
+
+Full ROS2 pipeline integrating MASt3R
+
+📚 Citation
+
+If you use this work in research:
+
+@misc{yourthesis2025mast3rtemporal,
+  title={ROS-Based Temporally Consistent Monocular 3D Reconstruction Using Multi-Frame 3D Priors with MASt3R Integration},
+  author={Payadi, Abhay},
+  year={2025}
+}
+
+🤝 Contributing
+
+Pull requests are welcome.
+If you'd like to improve temporal fusion, MASt3R integration, or dataset support, feel free to open an issue.

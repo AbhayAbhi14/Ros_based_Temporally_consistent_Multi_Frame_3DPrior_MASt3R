@@ -1,0 +1,13 @@
+Metric,Method,Mean,Rank
+Chamfer Distance ↓,Temporal Fusion (Adaptive),0.08375215828055992,1
+Chamfer Distance ↓,Temporal Fusion (Fixed),0.10324805682477457,2
+Chamfer Distance ↓,MASt3R,2.8285921962321305,3
+Convergence Score ↑,MASt3R,0.281399085010797,1
+Convergence Score ↑,Temporal Fusion (Fixed),0.11704090576338208,2
+Convergence Score ↑,Temporal Fusion (Adaptive),0.10042624900343755,3
+Overlap Ratio ↑,Temporal Fusion (Adaptive),0.8243232844286207,1
+Overlap Ratio ↑,MASt3R,0.7954322937842986,2
+Overlap Ratio ↑,Temporal Fusion (Fixed),0.7253707545864585,3
+Δ Depth ↓,Temporal Fusion (Fixed),0.7053294415791983,1
+Δ Depth ↓,Temporal Fusion (Adaptive),0.7088143249563691,2
+Δ Depth ↓,MASt3R,0.711185194364115,3

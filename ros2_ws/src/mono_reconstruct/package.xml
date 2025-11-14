@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd"
+             schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>mono_reconstruct</name>
+  <version>0.0.0</version>
+  <description>Monocular 3D Reconstruction with MASt3R and Temporal Fusion</description>
+
+  <maintainer email="abhaypayyadi@gmail.com">abhaypayadi</maintainer>
+  <license>TODO</license>
+
+  <!-- Core ROS 2 dependencies -->
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>pcl_msgs</depend>
+
+  <!-- Additional Python dependencies -->
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-open3d</exec_depend>
+  <exec_depend>python3-pyproj</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+
+  <!-- Testing tools -->
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

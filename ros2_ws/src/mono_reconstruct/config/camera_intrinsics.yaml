@@ -1,0 +1,10 @@
+camera:
+  width: 640
+  height: 480
+  fx: 615.0
+  fy: 615.0
+  cx: 320.0
+  cy: 240.0
+  distortion_model: "plumb_bob"
+  distortion_coefficients: [0.0, 0.0, 0.0, 0.0, 0.0]
+

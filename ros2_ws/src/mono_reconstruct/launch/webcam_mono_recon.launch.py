@@ -1,14 +1,12 @@
 import os
 import subprocess
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
 def find_external_camera():
-    """
-    Detects an external USB camera automatically by parsing `v4l2-ctl --list-devices`.
-    Prefers external cameras (USB, GoPro, Logitech, etc.).
-    """
     try:
         result = subprocess.run(['v4l2-ctl', '--list-devices'], capture_output=True, text=True)
         lines = result.stdout.splitlines()
@@ -21,17 +19,14 @@ def find_external_camera():
             elif '/dev/video' in line and current_name:
                 devices[line.strip()] = current_name
 
-        # Prefer external cameras
         for dev, name in devices.items():
             if any(x in name.lower() for x in ['usb', 'external', 'logitech', 'realsense', 'gopro']):
                 return dev
 
-        # Fallback: avoid integrated webcams
         for dev, name in devices.items():
             if not any(x in name.lower() for x in ['integrated', 'laptop webcam', 'hd webcam']):
                 return dev
 
-        # Final fallback
         return list(devices.keys())[0] if devices else '/dev/video0'
 
     except Exception:
@@ -39,38 +34,41 @@ def find_external_camera():
 
 
 def generate_launch_description():
-    # Auto-select camera
-    camera_device = find_external_camera()
-    print(f"📸 Auto-selected camera device: {camera_device}")
 
-    # RViz configuration file path
-    rviz_config_path = os.path.join(
-        os.path.dirname(__file__),
-        'mono_recon_viz.rviz'
-    )
-    rviz_args = ['-d', rviz_config_path] if os.path.exists(rviz_config_path) else []
+    selected_cloud = LaunchConfiguration('selected_cloud')
 
     return LaunchDescription([
 
-        # ────────────────────────────────
-        # USB Camera Node
-        # ────────────────────────────────
+        # ─────────────────────────────────────
+        # Launch ARGUMENTS
+        # ─────────────────────────────────────
+        DeclareLaunchArgument(
+            'selected_cloud',
+            default_value='raw',
+            description='Choose which cloud to overlay: raw / adaptive / fixed'
+        ),
+
+        # ─────────────────────────────────────
+        # Camera Node
+        # ─────────────────────────────────────
         Node(
             package='v4l2_camera',
             executable='v4l2_camera_node',
             name='usb_camera',
             output='screen',
             parameters=[{
-                'video_device': camera_device,
+                'video_device': find_external_camera(),
                 'image_size': [640, 480],
                 'frame_rate': 30.0
             }],
-            remappings=[('/image_raw', '/camera/image_raw')]
+            remappings=[
+                ('/image_raw', '/camera/image_raw')
+            ]
         ),
 
-        # ────────────────────────────────
-        # MASt3R Reconstruction Node
-        # ────────────────────────────────
+        # ─────────────────────────────────────
+        # MASt3R Node
+        # ─────────────────────────────────────
         Node(
             package='mono_reconstruct',
             executable='mast3r_node',
@@ -79,17 +77,12 @@ def generate_launch_description():
             parameters=[{
                 'publish_pointcloud': True,
                 'frame_id': 'camera_link'
-            }],
-            remappings=[
-                ('/camera/image_raw', '/camera/image_raw'),
-                ('/mast3r/pointcloud', '/mast3r/pointcloud'),
-                ('/mast3r/depth', '/mast3r/depth')
-            ]
+            }]
         ),
 
-        # ────────────────────────────────
-        # Temporal Fusion Node (Adaptive)
-        # ────────────────────────────────
+        # ─────────────────────────────────────
+        # Temporal Fusion (Adaptive)
+        # ─────────────────────────────────────
         Node(
             package='mono_reconstruct',
             executable='temporal_fusion_node',
@@ -102,16 +95,12 @@ def generate_launch_description():
                 'output_topic': '/mast3r/fused_pointcloud_adaptive',
                 'frame_id': 'map',
                 'publish_rate': 5.0
-            }],
-            remappings=[
-                ('/mast3r/pointcloud', '/mast3r/pointcloud'),
-                ('/mast3r/fused_pointcloud', '/mast3r/fused_pointcloud_adaptive')
-            ]
+            }]
         ),
 
-        # ────────────────────────────────
-        #  Fixed Window Fusion Node (New)
-        # ────────────────────────────────
+        # ─────────────────────────────────────
+        # Fixed Window Fusion
+        # ─────────────────────────────────────
         Node(
             package='mono_reconstruct',
             executable='temporal_fusion_fixed',
@@ -124,16 +113,12 @@ def generate_launch_description():
                 'icp_distance': 0.05,
                 'voxel_size': 0.02,
                 'frame_id': 'map'
-            }],
-            remappings=[
-                ('/mast3r/pointcloud', '/mast3r/pointcloud'),
-                ('/mast3r/fused_pointcloud', '/mast3r/fused_pointcloud_fixed')
-            ]
+            }]
         ),
 
-        # ────────────────────────────────
-        #  TF Broadcaster
-        # ────────────────────────────────
+        # ─────────────────────────────────────
+        # TF Broadcaster
+        # ─────────────────────────────────────
         Node(
             package='mono_reconstruct',
             executable='camera_tf_broadcaster',
@@ -145,14 +130,38 @@ def generate_launch_description():
             }]
         ),
 
-        # ────────────────────────────────
-        #  RViz2 Visualization
-        # ────────────────────────────────
+        # ─────────────────────────────────────
+        # Overlay Projector (Your Node)
+        # ─────────────────────────────────────
+        Node(
+            package='mono_reconstruct',
+            executable='overlay_projector_tf',
+            name='overlay_projector_tf',
+            output='screen',
+            parameters=[{
+                'image_topic': '/camera/image_raw',
+                'raw_cloud_topic': '/mast3r/pointcloud',
+                'adaptive_cloud_topic': '/mast3r/fused_pointcloud_adaptive',
+                'fixed_cloud_topic': '/mast3r/fused_pointcloud_fixed',
+                'selected_cloud': selected_cloud,
+                'output_image_topic': '/overlay/image',
+                'camera_frame': 'camera_link',
+
+                # Camera intrinsics
+                'fx': 420.0,
+                'fy': 420.0,
+                'cx': 320.0,
+                'cy': 240.0
+            }]
+        ),
+
+        # ─────────────────────────────────────
+        # RViz2
+        # ─────────────────────────────────────
         Node(
             package='rviz2',
             executable='rviz2',
             name='rviz2',
-            output='screen',
-            arguments=rviz_args
-        ),
+            output='screen'
+        )
     ])

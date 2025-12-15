@@ -28,6 +28,7 @@ setup(
             'temporal_fusion_node = mono_reconstruct.temporal_fusion_node:main',
             'temporal_fusion_fixed = mono_reconstruct.temporal_fusion_fixed:main',
             'overlay_projector_tf = mono_reconstruct.overlay_projector_tf:main',
+            'depth_compare = mono_reconstruct.depth_compare:main',
         ],
     },
 )

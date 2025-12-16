@@ -1,4 +1,3 @@
-import os
 import subprocess
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -8,28 +7,40 @@ from launch_ros.actions import Node
 
 def find_external_camera():
     try:
-        result = subprocess.run(['v4l2-ctl', '--list-devices'], capture_output=True, text=True)
+        result = subprocess.run(
+            ['v4l2-ctl', '--list-devices'],
+            capture_output=True,
+            text=True
+        )
+
         lines = result.stdout.splitlines()
         devices = {}
         current_name = None
 
         for line in lines:
-            if ':' in line:
-                current_name = line.strip().split(':')[0]
+            if line.strip().endswith(':'):
+                current_name = line.strip().lower()
             elif '/dev/video' in line and current_name:
                 devices[line.strip()] = current_name
 
+       
         for dev, name in devices.items():
-            if any(x in name.lower() for x in ['usb', 'external', 'logitech', 'realsense', 'gopro']):
+            if 'logitech' in name or 'brio' in name:
+                print(f"[INFO] Using Logitech camera: {dev} ({name})")
                 return dev
 
+        
         for dev, name in devices.items():
-            if not any(x in name.lower() for x in ['integrated', 'laptop webcam', 'hd webcam']):
+            if 'usb' in name and 'uvc' not in name:
+                print(f"[INFO] Using external USB camera: {dev} ({name})")
                 return dev
 
-        return list(devices.keys())[0] if devices else '/dev/video0'
+        
+        print("No external camera found, falling back to /dev/video0")
+        return '/dev/video0'
 
-    except Exception:
+    except Exception as e:
+        print(f"[ERROR] Camera detection failed: {e}")
         return '/dev/video0'
 
 
@@ -40,34 +51,38 @@ def generate_launch_description():
     return LaunchDescription([
 
         # ─────────────────────────────────────
-        # Launch ARGUMENTS
+        # LAUNCH ARGUMENT
         # ─────────────────────────────────────
         DeclareLaunchArgument(
             'selected_cloud',
             default_value='raw',
-            description='Choose which cloud to overlay: raw / adaptive / fixed'
+            description='raw / adaptive / fixed'
         ),
 
         # ─────────────────────────────────────
-        # Camera Node
+        # USB CAMERA (LOGITECH BRIO)
+        # Publishes: /camera/image_raw
         # ─────────────────────────────────────
         Node(
-            package='v4l2_camera',
-            executable='v4l2_camera_node',
-            name='usb_camera',
+            package='usb_cam',
+            executable='usb_cam_node_exe',
+            namespace='camera',
+            name='usb_cam',
             output='screen',
             parameters=[{
                 'video_device': find_external_camera(),
-                'image_size': [640, 480],
-                'frame_rate': 30.0
-            }],
-            remappings=[
-                ('/image_raw', '/camera/image_raw')
-            ]
+                'image_width': 640,
+                'image_height': 480,
+                'framerate': 30.0,
+                'pixel_format': 'mjpeg2rgb',
+                'camera_name': 'usb_camera',
+                'camera_info_url': 'file:///home/abhay/.ros/camera_info/usb_camera.yaml',
+                'io_method': 'mmap'
+            }]
         ),
 
         # ─────────────────────────────────────
-        # MASt3R Node
+        # MASt3R NODE
         # ─────────────────────────────────────
         Node(
             package='mono_reconstruct',
@@ -75,13 +90,14 @@ def generate_launch_description():
             name='mast3r_node',
             output='screen',
             parameters=[{
+                'image_topic': '/camera/image_raw',
                 'publish_pointcloud': True,
                 'frame_id': 'camera_link'
             }]
         ),
 
         # ─────────────────────────────────────
-        # Temporal Fusion (Adaptive)
+        # TEMPORAL FUSION (ADAPTIVE)
         # ─────────────────────────────────────
         Node(
             package='mono_reconstruct',
@@ -99,7 +115,7 @@ def generate_launch_description():
         ),
 
         # ─────────────────────────────────────
-        # Fixed Window Fusion
+        # TEMPORAL FUSION (FIXED)
         # ─────────────────────────────────────
         Node(
             package='mono_reconstruct',
@@ -117,7 +133,7 @@ def generate_launch_description():
         ),
 
         # ─────────────────────────────────────
-        # TF Broadcaster
+        # CAMERA TF BROADCASTER
         # ─────────────────────────────────────
         Node(
             package='mono_reconstruct',
@@ -131,7 +147,7 @@ def generate_launch_description():
         ),
 
         # ─────────────────────────────────────
-        # Overlay Projector (Your Node)
+        # OVERLAY PROJECTOR
         # ─────────────────────────────────────
         Node(
             package='mono_reconstruct',
@@ -140,23 +156,25 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'image_topic': '/camera/image_raw',
+
                 'raw_cloud_topic': '/mast3r/pointcloud',
                 'adaptive_cloud_topic': '/mast3r/fused_pointcloud_adaptive',
                 'fixed_cloud_topic': '/mast3r/fused_pointcloud_fixed',
+
                 'selected_cloud': selected_cloud,
                 'output_image_topic': '/overlay/image',
                 'camera_frame': 'camera_link',
 
-                # Camera intrinsics
-                'fx': 420.0,
-                'fy': 420.0,
+                # Calibration (update if needed)
+                'fx': 615.0,
+                'fy': 615.0,
                 'cx': 320.0,
                 'cy': 240.0
             }]
         ),
 
         # ─────────────────────────────────────
-        # RViz2
+        # RVIZ
         # ─────────────────────────────────────
         Node(
             package='rviz2',

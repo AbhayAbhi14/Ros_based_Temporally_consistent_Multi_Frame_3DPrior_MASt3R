@@ -217,8 +217,8 @@ def build_nodes(context, *args, **kwargs):
     nodes.append(
         Node(
             package='mono_reconstruct',
-            executable='compare_depth',
-            name='compare_depth',
+            executable='depth_compare',
+            name='depth_compare',
             output='screen',
             parameters=[{
                 'mast3r_topic': '/mast3r/depth_image',

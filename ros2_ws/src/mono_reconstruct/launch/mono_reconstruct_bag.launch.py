@@ -9,7 +9,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    # Launch arguments
+    # Launch argument
     use_rosbag = LaunchConfiguration("use_rosbag")
 
     declare_use_rosbag = DeclareLaunchArgument(
